@@ -20,38 +20,40 @@
 #include <seastar/core/gate.hh>
 
 #include <fmt/format.h>
+
 #include <string_view>
 
 using namespace storage; // NOLINT
 
 namespace {
 
-  ss::file open_file(std::string_view filename) {
-      return ss::open_file_dma(
-                 filename,
-                 ss::open_flags::create | ss::open_flags::rw
-                   | ss::open_flags::truncate)
-                 .get0();
-  }
+ss::file open_file(std::string_view filename) {
+    return ss::open_file_dma(
+             filename,
+             ss::open_flags::create | ss::open_flags::rw
+               | ss::open_flags::truncate)
+      .get0();
+}
 
-  segment_appender make_segment_appender(ss::file file) {
-      return segment_appender(
-        std::move(file), segment_appender::options(ss::default_priority_class(), 1));
-  }
+segment_appender make_segment_appender(ss::file file) {
+    return segment_appender(
+      std::move(file),
+      segment_appender::options(ss::default_priority_class(), 1));
+}
 
-  iobuf make_random_data(size_t len) {
-        size_t random_len = std::min(1024UL, len);  // NOLINT local constant
-        const auto rbuf = random_generators::gen_alphanum_string(random_len);
-        iobuf output;
-        size_t left = len;
-        while (left > 0) {
-            size_t copy_len = std::min(left, random_len);
-            output.append(rbuf.data(), copy_len);
-            left -= copy_len;
-        }
-        BOOST_CHECK_EQUAL(len, output.size_bytes());
-        return output;
-  }
+iobuf make_random_data(size_t len) {
+    size_t random_len = std::min(1024UL, len); // NOLINT local constant
+    const auto rbuf = random_generators::gen_alphanum_string(random_len);
+    iobuf output;
+    size_t left = len;
+    while (left > 0) {
+        size_t copy_len = std::min(left, random_len);
+        output.append(rbuf.data(), copy_len);
+        left -= copy_len;
+    }
+    BOOST_CHECK_EQUAL(len, output.size_bytes());
+    return output;
+}
 } // namespace
 
 SEASTAR_THREAD_TEST_CASE(test_can_append_multiple_flushes) {

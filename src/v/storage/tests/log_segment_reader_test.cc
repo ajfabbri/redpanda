@@ -32,25 +32,25 @@ using namespace storage; // NOLINT
       actual.begin(), actual.end(), expected.begin(), expected.end());
 
 namespace {
-  ss::circular_buffer<model::record_batch>
-  copy(ss::circular_buffer<model::record_batch>& input) {
-      ss::circular_buffer<model::record_batch> ret;
-      ret.reserve(input.size());
-      for (auto& b : input) {
-          ret.push_back(b.share());
-      }
-      return ret;
-  }
+ss::circular_buffer<model::record_batch>
+copy(ss::circular_buffer<model::record_batch>& input) {
+    ss::circular_buffer<model::record_batch> ret;
+    ret.reserve(input.size());
+    for (auto& b : input) {
+        ret.push_back(b.share());
+    }
+    return ret;
+}
 
-  void write(
-    ss::circular_buffer<model::record_batch> batches, disk_log_builder& builder) {
-      auto seg = builder.get_log_segments().front().get();
-      for (auto& b : batches) {
-          b.header().header_crc = model::internal_header_only_crc(b.header());
-          seg->append(std::move(b)).get();
-      }
-      seg->flush().get();
-  }
+void write(
+  ss::circular_buffer<model::record_batch> batches, disk_log_builder& builder) {
+    auto seg = builder.get_log_segments().front().get();
+    for (auto& b : batches) {
+        b.header().header_crc = model::internal_header_only_crc(b.header());
+        seg->append(std::move(b)).get();
+    }
+    seg->flush().get();
+}
 } // namespace
 
 SEASTAR_THREAD_TEST_CASE(test_can_read_single_batch_smaller_offset) {
