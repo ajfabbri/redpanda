@@ -19,15 +19,8 @@ namespace cluster::node {
 
 class local_monitor {
 public:
-    local_monitor() = default;
-    local_monitor(local_monitor&) = default;
-    local_monitor(local_monitor&&) = default;
-    ~local_monitor() = default;
-    local_monitor& operator=(local_monitor const&) = default;
-    local_monitor& operator=(local_monitor&&) = default;
-
     ss::future<> update_state();
-    local_state get_state_cached() const;
+    local_state const& get_state_cached();
 
 private:
     ss::future<std::vector<disk>> get_disks();

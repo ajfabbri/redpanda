@@ -32,7 +32,6 @@
 namespace cluster::node {
 
 ss::future<> local_monitor::update_state() {
-    // XXX AJF review question: do we need an abort source here?
     auto disks = co_await get_disks();
     auto vers = application_version((std::string)redpanda_version());
     auto ts = model::timestamp::now();
@@ -48,8 +47,8 @@ ss::future<> local_monitor::update_state() {
     co_return;
 }
 
-local_state local_monitor::get_state_cached() const {
-    // XXX AJF copy
+// Returned reference is not stable. Use or copy before 
+local_state const& local_monitor::get_state_cached() {
     return _state;
 }
 
