@@ -10,7 +10,6 @@
  */
 #include "types.h"
 
-#include "model/timestamp.h"
 #include "utils/human.h"
 #include "utils/to_string.h"
 
@@ -34,11 +33,10 @@ std::ostream& operator<<(std::ostream& o, const disk& d) {
 std::ostream& operator<<(std::ostream& o, const local_state& s) {
     fmt::print(
       o,
-      "{{redpanda_version: {}, uptime: {}, disks: {}, timestamp: {}}}",
+      "{{redpanda_version: {}, uptime: {}, disks: {}}}",
       s.redpanda_version,
       s.uptime,
-      s.disks,
-      s.timestamp);
+      s.disks);
     return o;
 }
 
