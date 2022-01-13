@@ -13,6 +13,7 @@
 #include "model/fundamental.h"
 #include "model/metadata.h"
 #include "model/timestamp.h"
+#include "reflection/adl.h"
 #include "types.h"
 #include "utils/human.h"
 #include "utils/named_type.h"
@@ -61,5 +62,12 @@ struct local_state {
 
 std::ostream& operator<<(std::ostream& o, const disk& d);
 std::ostream& operator<<(std::ostream& o, const local_state& s);
-
 } // namespace cluster::node
+
+namespace reflection {
+template<>
+struct adl<cluster::node::disk> {
+    void to(iobuf&, cluster::node::disk&&);
+    cluster::node::disk from(iobuf_parser&);
+};
+} // namespace reflection
