@@ -45,9 +45,16 @@ ss::future<> local_monitor::update_state() {
 
 const local_state& local_monitor::get_state_cached() { return _state; }
 
+void local_monitor::set_path_for_test(const ss::sstring& path) {
+    _path_for_test = path;
+}
+
 ss::future<std::vector<disk>> local_monitor::get_disks() {
-    auto svfs = co_await ss::engine().statvfs(
-      config::node().data_directory().as_sstring());
+    auto path = _path_for_test.empty()
+                  ? config::node().data_directory().as_sstring()
+                  : _path_for_test;
+
+    auto svfs = co_await ss::engine().statvfs(path);
 
     co_return std::vector<disk>{disk{
       .path = config::node().data_directory().as_sstring(),
