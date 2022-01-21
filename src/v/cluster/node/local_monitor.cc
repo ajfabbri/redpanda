@@ -30,11 +30,11 @@ namespace cluster::node {
 ss::future<> local_monitor::update_state() {
     auto disks = co_await get_disks();
     auto vers = application_version(ss::sstring(redpanda_version()));
-    auto ts = ss::lowres_clock::now();
+    auto ts = now().get();
     auto uptime = std::chrono::duration_cast<std::chrono::milliseconds>(
       ss::engine().uptime());
 
-    _state = {
+    _state = local_state{
       .redpanda_version = vers,
       .uptime = uptime,
       .disks = disks,
@@ -49,12 +49,22 @@ void local_monitor::set_path_for_test(const ss::sstring& path) {
     _path_for_test = path;
 }
 
+void local_monitor::set_clock_for_test(
+  std::function<model::timestamp(void)> clock) {
+    _clock_for_test = std::move(clock);
+}
+
+void local_monitor::set_statvfs_for_test(
+  std::function<struct statvfs(const ss::sstring&)> func) {
+    _statvfs_for_test = std::move(func);
+}
+
 ss::future<std::vector<disk>> local_monitor::get_disks() {
     auto path = _path_for_test.empty()
                   ? config::node().data_directory().as_sstring()
                   : _path_for_test;
 
-    auto svfs = co_await ss::engine().statvfs(path);
+    auto svfs = co_await get_statvfs(path);
 
     co_return std::vector<disk>{disk{
       .path = config::node().data_directory().as_sstring(),
@@ -64,4 +74,19 @@ ss::future<std::vector<disk>> local_monitor::get_disks() {
     }};
 }
 
+ss::future<ss::lowres_clock::time_point> local_monitor::now() {
+    if (_clock_for_test) {
+        co_return _clock_for_test.value()();
+    } else {
+        co_return ss::lowres_clock::now();
+    }
+}
+
+ss::future<struct statvfs> local_monitor::get_statvfs(const ss::sstring& path) {
+    if (_statvfs_for_test) {
+        co_return _statvfs_for_test.value()(path);
+    } else {
+        co_return co_await ss::engine().statvfs(path);
+    }
+}
 } // namespace cluster::node

@@ -13,6 +13,8 @@
 
 #include <seastar/core/sstring.hh>
 
+#include <sys/statvfs.h>
+
 // Local node state monitoring is kept separate in case we want to access it
 // pre-quorum formation in the future, etc.
 namespace cluster::node {
@@ -30,13 +32,21 @@ public:
     const local_state& get_state_cached() const;
 
     void set_path_for_test(const ss::sstring& path);
+    void
+      set_statvfs_for_test(std::function<struct statvfs(const ss::sstring&)>);
+    void set_clock_for_test(std::function<model::timestamp(void)>);
 
 private:
     ss::future<std::vector<disk>> get_disks();
+    ss::future<ss::lowres_clock::time_point> now();
+    ss::future<struct statvfs> get_statvfs(const ss::sstring&);
     local_state _state;
 
     // Injection points for unit tests
     ss::sstring _path_for_test;
+    std::optional<std::function<model::timestamp()>> _clock_for_test;
+    std::optional<std::function<struct statvfs(const ss::sstring&)>>
+      _statvfs_for_test;
 };
 
 } // namespace cluster::node
