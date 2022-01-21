@@ -52,6 +52,8 @@ struct local_state {
     std::chrono::milliseconds uptime;
     // Eventually support multiple volumes.
     std::vector<disk> disks;
+    // TODO distinct type instead of int
+    unsigned storage_space_alert;
 
     // Unserialized fields:
     // Local time when state was collected
