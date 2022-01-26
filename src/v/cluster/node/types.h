@@ -44,6 +44,8 @@ struct disk {
     friend bool operator==(const disk&, const disk&) = default;
 };
 
+enum class disk_space_alert { ok = 0, low_space = 1, degraded = 2 };
+
 /**
  * A snapshot of node-local state: i.e. things that don't depend on consensus.
  */
@@ -52,8 +54,8 @@ struct local_state {
     std::chrono::milliseconds uptime;
     // Eventually support multiple volumes.
     std::vector<disk> disks;
-    // TODO distinct type instead of int
-    unsigned storage_space_alert;
+
+    disk_space_alert storage_space_alert;
 
     // Unserialized fields:
     // Local time when state was collected
@@ -63,6 +65,7 @@ struct local_state {
 };
 
 std::ostream& operator<<(std::ostream& o, const disk& d);
+std::ostream& operator<<(std::ostream& o, const disk_space_alert d);
 std::ostream& operator<<(std::ostream& o, const local_state& s);
 } // namespace cluster::node
 
