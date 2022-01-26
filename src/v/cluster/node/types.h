@@ -20,6 +20,8 @@
 
 #include <fmt/ostream.h>
 
+#include <cstdint>
+
 namespace cluster::node {
 
 //
@@ -41,7 +43,7 @@ struct disk {
     friend bool operator==(const disk&, const disk&) = default;
 };
 
-enum class disk_space_alert { ok = 0, low_space = 1, degraded = 2 };
+enum class disk_space_alert : uint32_t { ok = 0, low_space = 1, degraded = 2 };
 
 /**
  * A snapshot of node-local state: i.e. things that don't depend on consensus.

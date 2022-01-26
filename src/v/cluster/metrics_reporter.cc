@@ -204,6 +204,7 @@ metrics_reporter::build_metrics_snapshot() {
           });
 
         metrics.uptime_ms = report.local_state.uptime / 1ms;
+        metrics.storage_space_alert = report.local_state.storage_space_alert;
     }
     auto& topics = _topics.local().topics_map();
     snapshot.topic_count = 0;
@@ -416,6 +417,8 @@ void rjson_serialize(
         rjson_serialize(w, d);
     }
     w.EndArray();
+    w.Key("storage_space_alert");
+    w.Uint(static_cast<uint32_t>(nm.storage_space_alert));
 
     w.EndObject();
 }
