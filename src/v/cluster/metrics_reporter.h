@@ -58,6 +58,7 @@ public:
         ss::sstring version;
         std::vector<node_disk_space> disks;
         uint64_t uptime_ms;
+        node::disk_space_alert storage_space_alert;
     };
 
     struct metrics_snapshot {
