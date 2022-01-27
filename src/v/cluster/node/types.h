@@ -17,6 +17,7 @@
 #include "utils/human.h"
 #include "utils/named_type.h"
 
+#include <seastar/core/lowres_clock.hh>
 #include <seastar/core/sstring.hh>
 
 #include <fmt/ostream.h>
@@ -53,7 +54,7 @@ struct local_state {
 
     // Unserialized fields:
     // Local time when state was collected
-    model::timestamp timestamp;
+    ss::lowres_clock::time_point timestamp;
 
     friend std::ostream& operator<<(std::ostream&, const local_state&);
 };

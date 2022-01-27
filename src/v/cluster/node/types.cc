@@ -38,7 +38,7 @@ std::ostream& operator<<(std::ostream& o, const local_state& s) {
       s.redpanda_version,
       s.uptime,
       s.disks,
-      s.timestamp);
+      s.timestamp.time_since_epoch());
     return o;
 }
 
