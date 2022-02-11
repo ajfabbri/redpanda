@@ -20,8 +20,6 @@
 
 #include <fmt/ostream.h>
 
-#include <cstdint>
-
 namespace cluster::node {
 
 //
