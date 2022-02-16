@@ -76,6 +76,7 @@ public:
     ss::sharded<kafka::group_router> group_router;
     ss::sharded<cluster::shard_table> shard_table;
     ss::sharded<storage::api> storage;
+    std::unique_ptr<storage::node_api> storage_node;
     std::unique_ptr<coproc::api> coprocessing;
     ss::sharded<coproc::partition_manager> cp_partition_manager;
     ss::sharded<cluster::partition_manager> partition_manager;

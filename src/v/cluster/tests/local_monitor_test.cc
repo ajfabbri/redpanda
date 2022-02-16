@@ -23,6 +23,7 @@
 #include <fmt/format.h>
 
 #include <filesystem>
+#include <memory>
 #include <string_view>
 #include <system_error>
 #include <vector>
@@ -32,8 +33,10 @@ using namespace cluster;
 local_monitor_fixture::local_monitor_fixture()
   : _local_monitor(
     config::shard_local_cfg().storage_space_alert_free_threshold_bytes.bind(),
-    config::shard_local_cfg()
-      .storage_space_alert_free_threshold_percent.bind()) {
+    config::shard_local_cfg().storage_space_alert_free_threshold_percent.bind(),
+    _storage_api) {
+    _storage_api.start().get0();
+
     clusterlog.info("{}: create", __func__);
     auto test_dir = "local_monitor_test."
                     + random_generators::gen_alphanum_string(4);

@@ -11,9 +11,11 @@
 
 #pragma once
 #include "cluster/node/local_monitor.h"
+#include "storage/api.h"
 
 #include <seastar/core/sstring.hh>
 
+#include <memory>
 #include <string_view>
 
 struct local_monitor_fixture {
@@ -24,6 +26,7 @@ struct local_monitor_fixture {
     static constexpr size_t default_bytes_threshold = 1_GiB;
 
     std::filesystem::path _test_path;
+    storage::node_api _storage_api;
     cluster::node::local_monitor _local_monitor;
 
     cluster::node::local_state update_state();
