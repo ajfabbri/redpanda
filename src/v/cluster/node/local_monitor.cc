@@ -15,6 +15,7 @@
 #include "cluster/node/types.h"
 #include "config/configuration.h"
 #include "config/node_config.h"
+#include "storage/api.h"
 #include "utils/human.h"
 #include "version.h"
 
@@ -34,9 +35,12 @@
 namespace cluster::node {
 
 local_monitor::local_monitor(
-  config::binding<size_t> min_bytes, config::binding<unsigned> min_percent)
+  config::binding<size_t> min_bytes,
+  config::binding<unsigned> min_percent,
+  storage::node_api& api)
   : _free_bytes_alert_threshold(min_bytes)
-  , _free_percent_alert_threshold(min_percent) {}
+  , _free_percent_alert_threshold(min_percent)
+  , _storage_api(api) {}
 
 ss::future<> local_monitor::update_state() {
     // grab new snapshot of local state
@@ -51,6 +55,7 @@ ss::future<> local_monitor::update_state() {
       .disks = disks,
     };
     update_alert_state();
+    update_disk_metrics();
     co_return;
 }
 
@@ -138,6 +143,11 @@ void local_monitor::update_alert_state() {
             maybe_log_space_error(d);
         }
     }
+}
+void local_monitor::update_disk_metrics() {
+    auto& d = _state.disks[0];
+    _storage_api.get().set_disk_metrics(
+      d.total, d.free, _state.storage_space_alert);
 }
 
 } // namespace cluster::node
