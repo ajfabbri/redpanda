@@ -615,6 +615,8 @@ void application::wire_up_redpanda_services() {
     construct_service(shard_table).get();
 
     syschecks::systemd_message("Intializing storage services").get();
+    construct_single_service_sharded(storage_node).get();
+
     auto log_cfg = manager_config_from_global_config(_scheduling_groups);
     log_cfg.reclaim_opts.background_reclaimer_sg
       = _scheduling_groups.cache_background_reclaim_sg();
@@ -701,6 +703,7 @@ void application::wire_up_redpanda_services() {
       partition_manager,
       shard_table,
       storage,
+      storage_node,
       std::ref(raft_group_manager),
       data_policies);
 
@@ -1083,6 +1086,8 @@ void application::start(::stop_signal& app_signal) {
 
 void application::start_redpanda() {
     syschecks::systemd_message("Staring storage services").get();
+    // single instance
+    storage_node.invoke_on_all(&storage::node_api::start).get0();
     storage.invoke_on_all(&storage::api::start).get();
 
     syschecks::systemd_message("Starting the partition manager").get();
