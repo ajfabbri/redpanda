@@ -7,6 +7,7 @@
 # the Business Source License, use of this software will be governed
 # by the Apache License, Version 2.0
 import copy
+from numbers import Number
 
 import time
 import os
@@ -146,14 +147,11 @@ class NodeCrash(Exception):
             return f"<NodeCrash ({names}) {example}>"
 
 
-V = TypeVar('V', int, float)
-
-
 class MetricSamples:
     def __init__(self, samples: List[MetricSample]):
         self.samples = samples
 
-    def label_filter(self, labels: Mapping[str, V]):
+    def label_filter(self, labels: Mapping[str, Number]):
         def f(sample):
             for key, value in labels.items():
                 assert key in sample.labels
