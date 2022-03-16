@@ -9,7 +9,6 @@
 
 from math import floor
 from time import time
-from typing import List, TypeVar
 from rptest.services.cluster import cluster
 from ducktape.utils.util import wait_until
 
@@ -19,14 +18,12 @@ from rptest.services.rpk_consumer import RpkConsumer
 from rptest.tests.redpanda_test import RedpandaTest
 from rptest.clients.types import TopicSpec
 
-T = TypeVar('T', int, float)
 
-
-def all_greater_than_zero(l1: List[T]):
+def all_greater_than_zero(l1: list[float]):
     return all([x > 0 for x in l1])
 
 
-def assert_lists_equal(l1: List[T], l2: List[T]):
+def assert_lists_equal(l1: list[float], l2: list[float]):
     assert l1 == l2
 
 
@@ -39,21 +36,21 @@ class NodeMetricsTest(RedpandaTest):
     def __init__(self, test_ctx):
         super().__init__(test_context=test_ctx)
 
-    def _get_metrics_vals(self, name_substr: str) -> List[int]:
+    def _get_metrics_vals(self, name_substr: str) -> list[float]:
         family = self.redpanda.metrics_sample(name_substr)
         assert family
         return list(map(lambda s: floor(s.value), family.samples))
 
-    def _node_disk_total_bytes(self) -> List[int]:
+    def _node_disk_total_bytes(self) -> list[float]:
         return self._get_metrics_vals("storage_disk_total_bytes")
 
-    def _node_disk_free_bytes(self) -> List[int]:
+    def _node_disk_free_bytes(self) -> list[float]:
         return self._get_metrics_vals("storage_disk_free_bytes")
 
-    def _node_disk_space_alert(self) -> List[int]:
+    def _node_disk_space_alert(self) -> list[float]:
         return self._get_metrics_vals("storage_disk_free_space_alert")
 
-    def _count_greater(self, l1: List[T], l2: List[T]) -> int:
+    def _count_greater(self, l1: list[float], l2: list[float]) -> int:
         """ return number of elements in l1 that were *strictly greater* than their
         counterpart in l2. """
         num_greater = 0
@@ -67,7 +64,7 @@ class NodeMetricsTest(RedpandaTest):
             f"count_greater: {l1} / {l2} -> {num_greater}")
         return num_greater
 
-    def _produce_consumed_space(self, orig_free: List[int]) -> bool:
+    def _produce_consumed_space(self, orig_free: list[float]) -> bool:
         """ Test helper: produce about 10MiB of data and return true if any of
         the nodes saw a reduction in free space.
         """

@@ -21,7 +21,7 @@ import threading
 import collections
 import re
 import uuid
-from typing import List, Mapping, Optional, TypeVar
+from typing import Mapping, Optional
 
 import yaml
 from ducktape.services.service import Service
@@ -148,7 +148,7 @@ class NodeCrash(Exception):
 
 
 class MetricSamples:
-    def __init__(self, samples: List[MetricSample]):
+    def __init__(self, samples: list[MetricSample]):
         self.samples = samples
 
     def label_filter(self, labels: Mapping[str, Number]):
