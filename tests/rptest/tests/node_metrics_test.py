@@ -54,11 +54,11 @@ class NodeMetricsTest(RedpandaTest):
         """ return number of elements in l1 that were *strictly greater* than their
         counterpart in l2. """
         num_greater = 0
-        for i, v in enumerate(l1):
-            if v > l2[i]:
+        for v, u in zip(l1, l2):
+            if v > u:
                 num_greater += 1
             self.redpanda.logger.debug(
-                f"count_greater({v} - {l2[i]} = {v - l2[i]}) -> {num_greater}")
+                f"count_greater({v} - {u} = {v - u}) -> {num_greater}")
 
         self.redpanda.logger.debug(
             f"count_greater: {l1} / {l2} -> {num_greater}")
