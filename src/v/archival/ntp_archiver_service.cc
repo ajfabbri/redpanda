@@ -135,6 +135,8 @@ ss::future<> ntp_archiver::upload_loop() {
             if (backoff > max_backoff) {
                 backoff = max_backoff;
             }
+        } else {
+            backoff = initial_backoff;
         }
     }
 }
