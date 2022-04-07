@@ -465,12 +465,6 @@ class RedpandaService(Service):
     def start_redpanda(self, node):
         preamble, res_args = self._resource_settings.to_cli()
 
-        # hack permissions since we have a mix of code that does and doesn't
-        # assume everthing is root.
-        node.account.ssh(f'sudo chown -R redpanda /etc/redpanda')
-        node.account.ssh(f'sudo chown -R redpanda /var/lib/redpanda')
-        node.account.ssh(f'sudo chown -R redpanda /mnt/vectorized')
-
         # Pass environment variables via FOO=BAR shell expressions
         env_preamble = " ".join(
             [f"{k}={v}" for (k, v) in self._environment.items()])
@@ -489,7 +483,6 @@ class RedpandaService(Service):
         if self.cov_enabled():
             cmd = f"LLVM_PROFILE_FILE=\"{RedpandaService.COVERAGE_PROFRAW_CAPTURE}\" " + cmd
 
-        cmd = f"sudo -u redpanda sh -c '{cmd}'"
         node.account.ssh(cmd)
 
     def signal_redpanda(self, node, signal=signal.SIGKILL, idempotent=False):
@@ -506,7 +499,7 @@ class RedpandaService(Service):
                     f"Can't signal redpanda on node {node.name}, it isn't running"
                 )
 
-        node.account.signal(pid, signal, allow_fail=False, sudo=True)
+        node.account.signal(pid, signal, allow_fail=False)
 
     def sockets_clear(self, node):
         """
@@ -569,9 +562,8 @@ class RedpandaService(Service):
         start within a timeout period the service will fail to start. Thus this
         function also acts as an implicit test that redpanda starts quickly.
         """
-        node.account.mkdirs(RedpandaService.DATA_DIR, sudo=True)
-        node.account.mkdirs(os.path.dirname(RedpandaService.NODE_CONFIG_FILE),
-                            sudo=True)
+        node.account.mkdirs(RedpandaService.DATA_DIR)
+        node.account.mkdirs(os.path.dirname(RedpandaService.NODE_CONFIG_FILE))
 
         if write_config:
             self.write_node_conf_file(node, override_cfg_params)
@@ -872,25 +864,23 @@ class RedpandaService(Service):
         self.delete_bucket_from_si()
 
     def clean_node(self, node, preserve_logs=False):
-        node.account.kill_process("redpanda", clean_shutdown=False, sudo=True)
+        node.account.kill_process("redpanda", clean_shutdown=False)
         if node.account.exists(RedpandaService.PERSISTENT_ROOT):
             if node.account.sftp_client.listdir(
                     RedpandaService.PERSISTENT_ROOT):
                 if not preserve_logs:
-                    node.account.remove(f"{RedpandaService.PERSISTENT_ROOT}/*",
-                                        sudo=True)
+                    node.account.remove(f"{RedpandaService.PERSISTENT_ROOT}/*")
                 else:
                     node.account.remove(
-                        f"{RedpandaService.PERSISTENT_ROOT}/data/*", sudo=True)
+                        f"{RedpandaService.PERSISTENT_ROOT}/data/*")
         if node.account.exists(RedpandaService.NODE_CONFIG_FILE):
-            node.account.remove(f"{RedpandaService.NODE_CONFIG_FILE}",
-                                sudo=True)
+            node.account.remove(f"{RedpandaService.NODE_CONFIG_FILE}")
         if node.account.exists(RedpandaService.CLUSTER_BOOTSTRAP_CONFIG_FILE):
             node.account.remove(
-                f"{RedpandaService.CLUSTER_BOOTSTRAP_CONFIG_FILE}", sudo=True)
+                f"{RedpandaService.CLUSTER_BOOTSTRAP_CONFIG_FILE}")
         if not preserve_logs and node.account.exists(
                 self.EXECUTABLE_SAVE_PATH):
-            node.account.remove(self.EXECUTABLE_SAVE_PATH, sudo=True)
+            node.account.remove(self.EXECUTABLE_SAVE_PATH)
 
     def remove_local_data(self, node):
         node.account.remove(f"{RedpandaService.PERSISTENT_ROOT}/data/*")
@@ -978,9 +968,8 @@ class RedpandaService(Service):
             self.logger.info(
                 "Writing bootstrap cluster config file {}:{}".format(
                     node.name, RedpandaService.CLUSTER_BOOTSTRAP_CONFIG_FILE))
-            node.account.mkdirs(os.path.dirname(
-                RedpandaService.CLUSTER_BOOTSTRAP_CONFIG_FILE),
-                                sudo=True)
+            node.account.mkdirs(
+                os.path.dirname(RedpandaService.CLUSTER_BOOTSTRAP_CONFIG_FILE))
             node.account.create_file(
                 RedpandaService.CLUSTER_BOOTSTRAP_CONFIG_FILE, conf_yaml)
 
