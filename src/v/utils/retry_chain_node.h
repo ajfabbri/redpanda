@@ -19,6 +19,7 @@
  *   futures and it's hard to correlate messages with each other
  * - retrying things is also tricky because the parent fiber can
  *   have some time limitation but child fibers might not finish
+ // AJF what time limitaiton?
  *   in time.
  * - aborting is only possible from top to bottom, it's not possible
  *   for the child fiber to abort an entire tree
