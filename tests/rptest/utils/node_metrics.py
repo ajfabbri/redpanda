@@ -1,5 +1,6 @@
 from math import floor
 
+from ducktape.cluster.cluster import ClusterNode
 from ducktape.utils.util import wait_until
 from rptest.services.redpanda import RedpandaService
 
@@ -13,10 +14,15 @@ class NodeMetrics:
     def __init__(self, redpanda: RedpandaService):
         self.redpanda = redpanda
 
-    def _get_metrics_vals(self, name_substr: str) -> list[float]:
-        family = self.redpanda.metrics_sample(name_substr)
-        assert family
-        return list(map(lambda s: floor(s.value), family.samples))
+    def _get_metrics_vals(self, name_substr: str, nodes=None) -> list[float]:
+        mval = self.redpanda.metrics_sample(name_substr, nodes=nodes)
+        assert mval
+        return list(map(lambda s: floor(s.value), mval.samples))
+
+    def disk_free_bytes_node(self, node: ClusterNode) -> float:
+        vals = self._get_metrics_vals("storage_disk_free_bytes", nodes=[node])
+        assert len(vals) == 1
+        return vals[0]
 
     def disk_total_bytes(self) -> list[float]:
         return self._get_metrics_vals("storage_disk_total_bytes")
