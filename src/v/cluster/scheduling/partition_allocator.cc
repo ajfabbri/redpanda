@@ -10,7 +10,8 @@
 #include "cluster/scheduling/partition_allocator.h"
 
 #include "cluster/logger.h"
-#include "cluster/members_table.h"
+#include "cluster/metadata_cache.h"
+#include "cluster/node/types.h"
 #include "cluster/scheduling/constraints.h"
 #include "cluster/scheduling/types.h"
 #include "cluster/types.h"
@@ -33,14 +34,14 @@
 namespace cluster {
 
 partition_allocator::partition_allocator(
-  ss::sharded<members_table>& members,
+  ss::sharded<metadata_cache>& metadata,
   config::binding<std::optional<size_t>> memory_per_partition,
   config::binding<std::optional<int32_t>> fds_per_partition,
   config::binding<size_t> fallocation_step,
   config::binding<bool> enable_rack_awareness)
   : _state(std::make_unique<allocation_state>())
   , _allocation_strategy(simple_allocation_strategy())
-  , _members(members)
+  , _metadata(metadata)
   , _memory_per_partition(memory_per_partition)
   , _fds_per_partition(fds_per_partition)
   , _fallocation_step(fallocation_step)
@@ -126,7 +127,7 @@ partition_allocator::allocate_partition(partition_constraints p_constraints) {
  */
 std::error_code partition_allocator::check_cluster_limits(
   allocation_request const& request) const {
-    if (_members.local().all_brokers().empty()) {
+    if (_metadata.local().all_brokers().empty()) {
         // Empty members table, we're probably running in a unit test
         return errc::success;
     }
@@ -146,40 +147,11 @@ std::error_code partition_allocator::check_cluster_limits(
     uint64_t proposed_total_partitions = existent_partitions + create_count;
 
     // Gather information about system-wide resource sizes
-    uint32_t min_core_count = 0;
-    uint64_t min_memory_bytes = 0;
-    uint64_t min_disk_bytes = 0;
-    auto all_brokers = _members.local().all_brokers();
-    for (const auto& b : all_brokers) {
-        if (min_core_count == 0) {
-            min_core_count = b->properties().cores;
-        } else {
-            min_core_count = std::min(min_core_count, b->properties().cores);
-        }
-
-        // In redpanda <= 21.11.x, available_memory_gb and available_disk_gb
-        // are not populated.  If they're zero we skip the check later.
-        if (min_memory_bytes == 0) {
-            min_memory_bytes = b->properties().available_memory_gb * 1_GiB;
-        } else if (b->properties().available_memory_gb > 0) {
-            min_memory_bytes = std::min(
-              min_memory_bytes, b->properties().available_memory_gb * 1_GiB);
-        }
-
-        if (min_disk_bytes == 0) {
-            min_disk_bytes = b->properties().available_disk_gb * 1_GiB;
-        } else if (b->properties().available_disk_gb > 0) {
-            min_disk_bytes = std::min(
-              min_disk_bytes, b->properties().available_disk_gb * 1_GiB);
-        }
-    }
-
-    // The effective values are the node count times the smallest node's
-    // resources: this avoids wrongly assuming the system will handle partition
-    // counts that only fit when scheduled onto certain nodes.
-    uint64_t effective_cpu_count = all_brokers.size() * min_core_count;
-    uint64_t effective_cluster_memory = all_brokers.size() * min_memory_bytes;
-    uint64_t effective_cluster_disk = all_brokers.size() * min_disk_bytes;
+    auto res = _metadata.local().get_minimum_node_resources();
+    auto n = _metadata.local().all_brokers().size();
+    uint64_t effective_cpu_count = n * res.min_core_count;
+    uint64_t effective_cluster_memory = n * res.min_memory_bytes;
+    uint64_t effective_cluster_disk = n * res.min_disk_bytes;
 
     vlog(
       clusterlog.debug,

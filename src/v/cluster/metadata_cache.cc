@@ -12,6 +12,7 @@
 #include "cluster/fwd.h"
 #include "cluster/health_monitor_frontend.h"
 #include "cluster/members_table.h"
+#include "cluster/node/types.h"
 #include "cluster/partition_leaders_table.h"
 #include "cluster/topic_table.h"
 #include "cluster/types.h"
@@ -248,4 +249,38 @@ metadata_cache::get_default_shadow_indexing_mode() const {
     }
     return m;
 }
+
+// Return the minimum node resource values for all brokers.
+node::resources metadata_cache::get_minimum_node_resources() const {
+    // Gather information about system-wide resource sizes
+    struct node::resources res = {};
+    // AJF why not all_alive_brokers()?
+    auto all_brokers = _members_table.local().all_brokers();
+    for (const auto& b : all_brokers) {
+        if (res.min_core_count == 0) {
+            res.min_core_count = b->properties().cores;
+        } else {
+            res.min_core_count = std::min(
+              res.min_core_count, b->properties().cores);
+        }
+
+        // In redpanda <= 21.11.x, available_memory_gb and available_disk_gb
+        // are not populated.  If they're zero we skip the check later.
+        if (res.min_memory_bytes == 0) {
+            res.min_memory_bytes = b->properties().available_memory_gb * 1_GiB;
+        } else if (b->properties().available_memory_gb > 0) {
+            res.min_memory_bytes = std::min(
+              res.min_memory_bytes, b->properties().available_memory_gb * 1_GiB);
+        }
+
+        if (res.min_disk_bytes == 0) {
+            res.min_disk_bytes = b->properties().available_disk_gb * 1_GiB;
+        } else if (b->properties().available_disk_gb > 0) {
+            res.min_disk_bytes = std::min(
+              res.min_disk_bytes, b->properties().available_disk_gb * 1_GiB);
+        }
+    }
+    return res;
+}
+
 } // namespace cluster

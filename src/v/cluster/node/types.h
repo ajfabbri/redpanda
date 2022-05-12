@@ -48,6 +48,12 @@ struct local_state {
 };
 
 std::ostream& operator<<(std::ostream& o, const local_state& s);
+
+struct resources {
+    uint32_t min_core_count = 0;
+    uint64_t min_memory_bytes = 0;
+    uint64_t min_disk_bytes = 0;
+};
 } // namespace cluster::node
 
 namespace reflection {
@@ -56,4 +62,5 @@ struct adl<storage::disk> {
     void to(iobuf&, storage::disk&&);
     storage::disk from(iobuf_parser&);
 };
+
 } // namespace reflection

@@ -166,6 +166,7 @@ public:
     std::optional<std::chrono::milliseconds>
     get_default_retention_duration() const;
     model::shadow_indexing_mode get_default_shadow_indexing_mode() const;
+    cluster::node::resources get_minimum_node_resources() const;
 
 private:
     ss::sharded<topic_table>& _topics_state;

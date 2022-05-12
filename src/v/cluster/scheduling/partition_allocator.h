@@ -12,6 +12,7 @@
 #pragma once
 
 #include "cluster/logger.h"
+#include "cluster/metadata_cache.h"
 #include "cluster/scheduling/allocation_node.h"
 #include "cluster/scheduling/allocation_state.h"
 #include "cluster/scheduling/allocation_strategy.h"
@@ -113,7 +114,7 @@ private:
 
     std::unique_ptr<allocation_state> _state;
     allocation_strategy _allocation_strategy;
-    ss::sharded<members_table>& _members;
+    ss::sharded<metadata_cache>& _metadata;
 
     config::binding<std::optional<size_t>> _memory_per_partition;
     config::binding<std::optional<int32_t>> _fds_per_partition;
