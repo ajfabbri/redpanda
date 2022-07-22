@@ -22,7 +22,6 @@ namespace ssx {
 // exception messages, making diagnoising broken or timed-out semaphores much
 // easier.
 
-// Use `make_samaphore(name)` to create these.
 template<typename Clock = seastar::timer<>::clock>
 class named_semaphore
   : public seastar::
